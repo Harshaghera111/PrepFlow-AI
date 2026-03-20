@@ -12,6 +12,7 @@ const DIFF_MAP  = { Easy: "diff-easy", Medium: "diff-medium", Hard: "diff-hard" 
 function Dashboard({ user, onStreakChange }) {
   const [question, setQuestion]     = useState("");
   const [hint, setHint]             = useState("");
+  const [news, setNews]             = useState(""); // Added news state as requested
   const [difficulty, setDifficulty] = useState("Medium");
   const [topic, setTopic]           = useState("General");
   const [articles, setArticles]     = useState([]);
@@ -44,15 +45,17 @@ function Dashboard({ user, onStreakChange }) {
   }, [timerOn]);
   const fmt = s => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 
-  const loadData = useCallback(async (t = selTopic, c = selCompany) => {
+  const loadData = useCallback(async (t = selTopic, c = selCompany, force = false) => {
     setLoading(true); setError(""); setShowHint(false);
     setNewsIndex(0); setBookmarkId(null); setElapsed(0); setTimerOn(false);
     try {
       const [api, prog] = await Promise.all([
-        fetchDashboardData(t, c),
+        fetchDashboardData(t, c, force),
         isDemoMode ? { solved: false, hintsUsed: 0, streak: 7 } : getDayProgress(userId),
       ]);
-      setQuestion(api.question); setHint(api.hint);
+      setQuestion(api.question); 
+      setHint(api.hint);
+      setNews(api.news || ""); // Bind news data
       setDifficulty(api.difficulty || "Medium"); setTopic(api.topic || t);
       setArticles(api.articles || []);
       setSolved(prog.solved); setHintsUsed(prog.hintsUsed); setStreak(prog.streak);
@@ -179,8 +182,8 @@ function Dashboard({ user, onStreakChange }) {
             {/* ── Question Card ── */}
             <div className="card card-accent-orange fade-in">
               {/* Header */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
                   <span style={{ fontSize: "15px" }}>💻</span>
                   <span style={{ fontSize: "14px", fontWeight: 700, color: "var(--text-1)" }}>Today's Question</span>
                   <span className={DIFF_MAP[difficulty] || "diff-medium"}>{difficulty}</span>
@@ -190,7 +193,7 @@ function Dashboard({ user, onStreakChange }) {
                     </span>
                   )}
                 </div>
-                <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
                   {!isDemoMode && (
                     <button
                       className="btn-icon"
@@ -201,7 +204,10 @@ function Dashboard({ user, onStreakChange }) {
                       {bookmarkId ? "🔖" : "📌"}
                     </button>
                   )}
-                  <button className="btn btn-outline btn-sm" onClick={() => loadData()}>
+                  <button className="btn btn-outline btn-sm" onClick={() => {
+                    localStorage.removeItem("prepflow_daily_data");
+                    loadData(selTopic, selCompany, true);
+                  }}>
                     🔄 New question
                   </button>
                 </div>

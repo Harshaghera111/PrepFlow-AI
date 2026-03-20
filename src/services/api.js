@@ -27,7 +27,7 @@ import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 const IS_DEV  = import.meta.env.DEV;
 const N8N_URL = IS_DEV
   ? "/api/n8n"                                             // proxied by vite.config.js
-  : "https://prepflow.app.n8n.cloud/webhook/prepflow";    // direct in production
+  : import.meta.env.VITE_API_URL;                         // loaded from Vercel environment variables
 
 /** FALLBACK: Google Gemini 2.0 Flash — question + hint generation */
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
@@ -125,11 +125,14 @@ function getDailyContentRef() {
  */
 async function fetchFromN8N() {
   try {
-    console.log("🔗 Fetching from n8n webhook (primary)...");
-    const response = await fetch(N8N_URL, {
-      method: "POST",
+    console.log("Fetching from n8n...");
+    // Append a timestamp to completely bust the browser's HTTP GET cache.
+    // Without this, "Force Refresh" appears to fail because the browser simply returns the previous identical network response! 
+    const fetchUrl = `${N8N_URL}${N8N_URL.includes("?") ? "&" : "?"}t=${Date.now()}`;
+    const response = await fetch(fetchUrl, {
+      method: "GET", // Changing to GET as it's often better for generic webhooks and sometimes avoids CORS pre-flight
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ source: "prepflow-dashboard" }),
+      cache: "no-store",
     });
 
     if (!response.ok) {
@@ -145,7 +148,7 @@ async function fetchFromN8N() {
       return null;
     }
 
-    console.log("✅ n8n webhook succeeded.");
+    console.log("API DATA:", data);
     return {
       question: String(data.question).trim(),
       hint:     String(data.hint).trim(),
@@ -295,66 +298,62 @@ export async function fetchMoreNews() {
  * Fetches today's full dashboard content.
  *
  * Priority:
- *   1. Firestore cache  (default/unfiltered queries only)
- *   2. n8n webhook      (primary live source)
- *   3. Gemini + NewsAPI (fallback if n8n fails)
- *
- * Topic/company filters bypass the cache and always hit the API.
- * When n8n is used, difficulty defaults to "Medium" and topic/company
- * default to "General" since the webhook doesn't return those fields.
+ *   1. n8n webhook      (primary live source)
+ *   2. Gemini + NewsAPI (fallback if n8n fails)
  *
  * @param {string} topic   - Filter topic,   "Any" = no filter
  * @param {string} company - Filter company, "Any" = no filter
- * @returns {{ question, hint, difficulty, topic, company, articles[] }}
+ * @returns {{ question, hint, difficulty, topic, company, articles[], news }}
  */
-export async function fetchDashboardData(topic = "Any", company = "Any") {
+export async function fetchDashboardData(topic = "Any", company = "Any", force = false) {
+  const today = new Date().toISOString().split("T")[0];
   const isFiltered = topic !== "Any" || company !== "Any";
 
-  // ── Step 1: Check Firestore cache (only for unfiltered default queries) ──
-  if (!isFiltered) {
+  // ── 1. LOCAL STORAGE LOGIC & DATE COMPARISON ────────────────────────────
+  if (!isFiltered && !force) {
     try {
-      const cached = await getDoc(getDailyContentRef());
-      if (cached.exists()) {
-        const d = cached.data();
-        if (d.question && d.hint) {
-          console.log("📦 Loaded from Firestore cache.");
-          const articles = Array.isArray(d.articles)
-            ? d.articles
-            : d.news
-            ? parseN8NNews(d.news)
-            : FALLBACK_NEWS;
+      const stored = localStorage.getItem("prepflow_daily_data");
+      if (stored) {
+        const parsedData = JSON.parse(stored);
+        
+        // Date comparison logic: Only use stored data if date exactly matches today
+        if (parsedData.date === today && parsedData.question && parsedData.hint) {
+          console.log("📦 Loaded exact same question from localStorage cache for today.");
           return {
-            question:   d.question,
-            hint:       d.hint,
-            articles,
-            difficulty: d.difficulty || "Medium",
-            topic:      d.topic      || "General",
-            company:    d.company    || "General",
+            question:   parsedData.question,
+            hint:       parsedData.hint,
+            news:       parsedData.news || "",
+            articles:   parsedData.news ? parseN8NNews(parsedData.news) : parseN8NNews(""),
+            difficulty: parsedData.difficulty || "Medium",
+            topic:      parsedData.topic      || "General",
+            company:    parsedData.company    || "General",
           };
         }
       }
-    } catch (cacheErr) {
-      console.warn("Cache read failed:", cacheErr.message);
+    } catch (err) {
+      console.warn("localStorage read failed, corrupted data. Fetching new...", err);
+      localStorage.removeItem("prepflow_daily_data");
     }
   }
 
-  // ── Step 2: Try n8n webhook (PRIMARY) ────────────────────────────────────
-  let question, hint, difficulty, returnedTopic, returnedCompany, articles;
+  // ── 2. API FETCH CONDITION (Only if different date, forced, or filtered) ──
+  console.log("🔄 Fetching fresh question from n8n...");
+  let question, hint, difficulty, returnedTopic, returnedCompany, articles, newsRaw;
 
+  // We skip n8n if filtered because n8n webhook currently returns generic random questions
   const n8nResult = isFiltered ? null : await fetchFromN8N();
-  // Note: When topic/company filters are active we skip n8n because it doesn't
-  // support those parameters — Gemini handles filtered queries.
 
   if (n8nResult) {
     // ✅ n8n succeeded — use its question, hint, and news
     question         = n8nResult.question;
     hint             = n8nResult.hint;
+    newsRaw          = n8nResult.news;
     difficulty       = "Medium";       // n8n doesn't return difficulty
     returnedTopic    = topic  !== "Any" ? topic   : "General";
     returnedCompany  = company !== "Any" ? company : "General";
     articles         = parseN8NNews(n8nResult.news);
   } else {
-    // ── Step 3: Fallback — Gemini AI + NewsAPI ────────────────────────────
+    // ── Fallback — Gemini AI + NewsAPI ────────────────────────────
     console.log("↩️  Falling back to Gemini + NewsAPI...");
     const [questionData, newsArticles] = await Promise.all([
       fetchQuestionFromGemini(topic, company),
@@ -363,29 +362,44 @@ export async function fetchDashboardData(topic = "Any", company = "Any") {
 
     question        = questionData.question;
     hint            = questionData.hint;
+    newsRaw         = "";
     difficulty      = questionData.difficulty    || "Medium";
     returnedTopic   = questionData.topic         || topic   || "General";
     returnedCompany = questionData.company       || company || "General";
     articles        = newsArticles;
   }
 
-  // ── Step 4: Save to Firestore cache (unfiltered queries only) ────────────
+  // ── 3. SAVE NEW DATA + TODAY'S DATE IN LOCALSTORAGE ────────────────────
   if (!isFiltered) {
     try {
+      const dailyData = {
+        date: today,
+        question,
+        hint,
+        news: newsRaw || "",
+        difficulty,
+        topic: returnedTopic,
+        company: returnedCompany
+      };
+      localStorage.setItem("prepflow_daily_data", JSON.stringify(dailyData));
+      console.log("💾 Saved new question + today's date in localStorage.");
+    } catch (saveErr) {
+      console.warn("Failed to set localStorage (quota exceeded?):", saveErr.message);
+    }
+    
+    // As a backup, we still securely save user analytics to Firestore
+    try {
       await setDoc(getDailyContentRef(), {
-        question, hint, articles, difficulty,
+        question, hint, articles, difficulty, news: newsRaw,
         topic:       returnedTopic,
         company:     returnedCompany,
         generatedAt: serverTimestamp(),
         source:      n8nResult ? "n8n" : "gemini",
       });
-      console.log("💾 Saved to Firestore cache.");
-    } catch (saveErr) {
-      console.warn("Cache save failed:", saveErr.message);
-    }
+    } catch (saveErr) {}
   }
 
-  return { question, hint, articles, difficulty, topic: returnedTopic, company: returnedCompany };
+  return { question, hint, articles, difficulty, news: newsRaw, topic: returnedTopic, company: returnedCompany };
 }
 
 // ── Answer Checker (Groq — LLaMA 3.1 8B Instant) ─────────────────────────────

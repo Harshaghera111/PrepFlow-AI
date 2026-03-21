@@ -1,7 +1,7 @@
 // Landing — modern, premium hero + parallax background
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
 
 function ParticleCanvas() {
   const canvasRef = useRef(null);
@@ -15,6 +15,7 @@ function ParticleCanvas() {
 
     let raf = 0;
     let running = true;
+    const isMobile = window.innerWidth < 640;
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -28,7 +29,7 @@ function ParticleCanvas() {
     resize();
 
     const rand = (min, max) => min + Math.random() * (max - min);
-    const particles = Array.from({ length: 90 }).map(() => ({
+    const particles = Array.from({ length: isMobile ? 55 : 90 }).map(() => ({
       x: rand(0, window.innerWidth),
       y: rand(0, window.innerHeight),
       vx: rand(-0.2, 0.2),
@@ -73,22 +74,24 @@ function ParticleCanvas() {
         ctx.fill();
       }
 
-      // Connect a few nearby points
-      for (let i = 0; i < particles.length; i += 2) {
-        for (let j = i + 1; j < i + 8 && j < particles.length; j++) {
-          const a = particles[i];
-          const b = particles[j];
-          const dx = a.x - b.x;
-          const dy = a.y - b.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 140) {
-            const alpha = (1 - dist / 140) * 0.18;
-            ctx.strokeStyle = `rgba(255,161,22,${alpha})`;
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(a.x, a.y);
-            ctx.lineTo(b.x, b.y);
-            ctx.stroke();
+      // Connect a few nearby points (disabled on mobile for performance)
+      if (!isMobile) {
+        for (let i = 0; i < particles.length; i += 2) {
+          for (let j = i + 1; j < i + 8 && j < particles.length; j++) {
+            const a = particles[i];
+            const b = particles[j];
+            const dx = a.x - b.x;
+            const dy = a.y - b.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 140) {
+              const alpha = (1 - dist / 140) * 0.18;
+              ctx.strokeStyle = `rgba(255,161,22,${alpha})`;
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(a.x, a.y);
+              ctx.lineTo(b.x, b.y);
+              ctx.stroke();
+            }
           }
         }
       }
@@ -124,6 +127,7 @@ function ParticleCanvas() {
 }
 
 function Landing({ theme, onToggleTheme, onStartDemo }) {
+  const [menuOpen, setMenuOpen] = useState(false);
   const { scrollY } = useScroll();
   const heroY = useTransform(scrollY, [0, 500], [0, -34]);
   const heroScale = useTransform(scrollY, [0, 500], [1, 0.985]);
@@ -193,6 +197,7 @@ function Landing({ theme, onToggleTheme, onStartDemo }) {
 
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <button
+            className="pf-theme-toggle-landing"
             onClick={onToggleTheme}
             style={{
               width: 34,
@@ -209,34 +214,99 @@ function Landing({ theme, onToggleTheme, onStartDemo }) {
             {theme === "dark" ? "☀️" : "🌙"}
           </button>
 
-          <Link
-            to="/login"
-            className="btn btn-outline"
+          <div className="pf-landing-desktop-actions" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <Link
+              to="/login"
+              className="btn btn-outline"
+              style={{
+                textDecoration: "none",
+                padding: "9px 14px",
+                fontWeight: 700,
+                borderRadius: 10,
+                borderColor: "rgba(255,255,255,0.18)",
+              }}
+            >
+              Sign in
+            </Link>
+
+            <motion.button
+              whileHover={{ y: -1, boxShadow: "0 10px 30px rgba(255,161,22,0.25)" }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onStartDemo}
+              className="btn btn-orange"
+              style={{ padding: "10px 16px", borderRadius: 10, fontWeight: 800 }}
+            >
+              Start Challenge
+            </motion.button>
+          </div>
+
+          <button
+            className="pf-landing-hamburger"
+            onClick={() => setMenuOpen((v) => !v)}
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
             style={{
-              textDecoration: "none",
-              padding: "9px 14px",
-              fontWeight: 700,
-              borderRadius: 10,
-              borderColor: "rgba(255,255,255,0.18)",
+              width: 44,
+              height: 44,
+              borderRadius: 12,
+              border: "1px solid rgba(255,255,255,0.12)",
+              background: "rgba(255,255,255,0.06)",
+              color: "var(--text-1)",
+              cursor: "pointer",
+              fontSize: 18,
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
-            Sign in
-          </Link>
-
-          <motion.button
-            whileHover={{ y: -1, boxShadow: "0 10px 30px rgba(255,161,22,0.25)" }}
-            whileTap={{ scale: 0.98 }}
-            onClick={onStartDemo}
-            className="btn btn-orange"
-            style={{ padding: "10px 16px", borderRadius: 10, fontWeight: 800 }}
-          >
-            Start Challenge
-          </motion.button>
+            {menuOpen ? "✕" : "☰"}
+          </button>
         </div>
       </motion.nav>
 
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            className="pf-nav-dropdown pf-landing-dropdown"
+            initial={{ opacity: 0, y: -6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.18 }}
+          >
+            <div className="pf-nav-dropdown-inner">
+              <Link
+                to="/login"
+                className="btn btn-outline"
+                style={{
+                  textDecoration: "none",
+                  width: "100%",
+                  justifyContent: "center",
+                  padding: "12px 16px",
+                  borderRadius: 12,
+                  borderColor: "rgba(255,255,255,0.18)",
+                }}
+                onClick={() => setMenuOpen(false)}
+              >
+                Sign in
+              </Link>
+
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  setMenuOpen(false);
+                  onStartDemo();
+                }}
+                className="btn btn-orange"
+                style={{ width: "100%", justifyContent: "center", padding: "12px 16px", borderRadius: 12, fontWeight: 900 }}
+              >
+                Start Challenge
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Hero */}
-      <div style={{ maxWidth: 1060, margin: "0 auto", padding: "64px 20px 0" }}>
+      <div style={{ maxWidth: 1060, margin: "0 auto", padding: "clamp(44px, 7vw, 64px) 16px 0" }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 18 }}>
           <motion.div
             style={{
@@ -294,7 +364,7 @@ function Landing({ theme, onToggleTheme, onStartDemo }) {
                 stay sharp for interviews.
               </p>
 
-              <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+              <div className="pf-landing-hero-actions" style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
                 <motion.button
                   whileHover={{ y: -2 }}
                   whileTap={{ scale: 0.98 }}
@@ -318,6 +388,7 @@ function Landing({ theme, onToggleTheme, onStartDemo }) {
                     color: "var(--text-1)",
                     fontWeight: 800,
                   }}
+                  className="pf-landing-secondary"
                 >
                   Sign in for full progress
                 </Link>

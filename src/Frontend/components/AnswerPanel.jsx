@@ -71,7 +71,7 @@ function AnswerPanel({ question, onSolved }) {
           </div>
         </div>
         {/* Mode switch */}
-        <div style={{ display: "flex", background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: "6px", overflow: "hidden", padding: "2px", gap: "2px" }}>
+        <div style={{ display: "flex", background: "var(--bg-elevated)", border: "1px solid var(--border)", borderRadius: "6px", overflow: "hidden", padding: "2px", gap: "2px", flexWrap: "wrap", justifyContent: "center" }}>
           {["code", "english"].map(m => (
             <button key={m} onClick={() => setMode(m)} style={{
               padding: "5px 13px", border: "none", cursor: "pointer",
@@ -91,7 +91,7 @@ function AnswerPanel({ question, onSolved }) {
       {mode === "code" && (
         <>
           {/* Language bar */}
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "10px 18px", borderBottom: "1px solid var(--border)", background: "rgba(0,0,0,0.15)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "10px 18px", borderBottom: "1px solid var(--border)", background: "rgba(0,0,0,0.15)", flexWrap: "wrap", rowGap: 8 }}>
             <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--text-3)", textTransform: "uppercase", letterSpacing: "0.8px", marginRight: "6px" }}>Language</span>
             {LANGS.map(l => (
               <button key={l} onClick={() => changeLang(l)} style={{
@@ -172,7 +172,7 @@ function AnswerPanel({ question, onSolved }) {
       )}
 
       {/* ─ Action bar ─ */}
-      <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end", padding: "12px 18px", borderTop: "1px solid var(--border)", background: "rgba(0,0,0,0.1)" }}>
+      <div className="pf-answer-actionbar" style={{ display: "flex", gap: "8px", padding: "12px 18px", borderTop: "1px solid var(--border)", background: "rgba(0,0,0,0.1)" }}>
         {mode === "code" && (
           <button className="btn btn-outline btn-sm" onClick={handleRun} disabled={running || !code.trim()}>
             {running ? "Running..." : "▶ Run Code"}

@@ -42,7 +42,7 @@ function QuestionCard({
           )}
         </div>
 
-        <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
+        <div className="pf-question-header-actions" style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
           {!isDemoMode && (
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -96,7 +96,7 @@ function QuestionCard({
       </div>
 
       {/* ── Action buttons ── */}
-      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+      <div className="pf-question-actions" style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
         <motion.button whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }} className="btn btn-green" onClick={onSolved}>
           {solved ? "✅ Marked as Solved" : "✔ Mark as Solved"}
         </motion.button>

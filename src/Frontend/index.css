@@ -108,6 +108,7 @@ body {
   font-size: 14px;
   line-height: 1.5;
   transition: background 0.2s ease, color 0.2s ease;
+  overflow-x: hidden;
 }
 
 ::-webkit-scrollbar { width: 5px; }
@@ -451,5 +452,142 @@ body {
   }
   .pf-stats-grid {
     grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ─── Mobile-first tweaks (<= 640px) ─────────────────────────────────────── */
+@media (max-width: 640px) {
+  .pf-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .code-textarea {
+    min-height: 150px;
+    font-size: 12.5px;
+  }
+
+  .btn {
+    min-height: 44px;
+  }
+
+  .btn-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+  }
+
+  .pf-nav-links-desktop {
+    display: none !important;
+  }
+
+  .pf-nav-hamburger {
+    display: inline-flex !important;
+    flex-shrink: 0;
+  }
+
+  .pf-nav-streak {
+    display: none !important;
+  }
+
+  .pf-theme-toggle,
+  .pf-theme-toggle-landing {
+    width: 44px !important;
+    height: 44px !important;
+  }
+
+  .section-header {
+    flex-wrap: wrap;
+    row-gap: 10px;
+  }
+}
+
+/* Default (desktop) dropdown/menu visibility */
+.pf-nav-hamburger { display: none; }
+
+.pf-nav-dropdown {
+  position: sticky;
+  top: 56px;
+  z-index: 99;
+  padding: 12px 18px 18px;
+  background: var(--nav-bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.pf-nav-dropdown-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 520px;
+}
+
+/* Landing page mobile actions */
+.pf-landing-desktop-actions { display: flex; }
+.pf-landing-hamburger { display: none; }
+.pf-landing-secondary { display: inline-flex; }
+
+.pf-landing-hero-actions { align-items: center; }
+
+@media (max-width: 640px) {
+  .pf-landing-desktop-actions { display: none !important; }
+  .pf-landing-hamburger { display: inline-flex !important; }
+  .pf-landing-hero-actions { flex-direction: column; align-items: stretch; }
+  .pf-landing-hero-actions .btn { width: 100%; justify-content: center; }
+  .pf-landing-secondary { width: 100%; justify-content: center; text-align: center; }
+
+  /* Prevent read-more link from pushing layout off-screen */
+  .pf-news-readmore { margin-left: 0 !important; }
+}
+
+/* Mobile stacking helpers (used by premium components) */
+.pf-mobile-stack {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .pf-mobile-stack {
+    flex-direction: column;
+  }
+}
+
+/* Question card mobile full-width buttons */
+@media (max-width: 640px) {
+  .pf-question-actions,
+  .pf-question-header-actions {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+  .pf-question-actions .btn,
+  .pf-question-header-actions .btn,
+  .pf-question-header-actions .btn-icon {
+    width: 100%;
+    justify-content: center;
+  }
+  /* Keep icon-only bookmark from taking full width on mobile */
+  .pf-question-header-actions .btn-icon {
+    width: 44px;
+  }
+}
+
+/* Answer panel mobile action bar */
+.pf-answer-actionbar {
+  justify-content: flex-end;
+}
+
+@media (max-width: 640px) {
+  .pf-answer-actionbar {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+  }
+  .pf-answer-actionbar .btn {
+    width: 100%;
+    justify-content: center;
   }
 }

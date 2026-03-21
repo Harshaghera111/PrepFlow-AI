@@ -60,6 +60,7 @@ function NewsCard({ articles, newsIndex, newsLoading, onPrev, onNext, onSetIndex
                 href={article.url}
                 target="_blank"
                 rel="noopener noreferrer"
+                className="pf-news-readmore"
                 style={{
                   fontSize: "12px", color: "var(--orange)", fontWeight: 600,
                   textDecoration: "none", marginLeft: "auto",

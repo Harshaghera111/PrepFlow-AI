@@ -1,5 +1,5 @@
 // TiltCard — lightweight 3D hover effect (no extra libs)
-import React, { useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 function TiltCard({
   children,
@@ -8,6 +8,20 @@ function TiltCard({
   disabled = false,
 }) {
   const ref = useRef(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 640px)");
+    const update = () => setIsMobile(!!mq.matches);
+    update();
+    // Safari/old browsers: addListener/removeListener fallback
+    if (typeof mq.addEventListener === "function") {
+      mq.addEventListener("change", update);
+      return () => mq.removeEventListener("change", update);
+    }
+    mq.addListener(update);
+    return () => mq.removeListener(update);
+  }, []);
 
   const reset = () => {
     const el = ref.current;
@@ -17,7 +31,7 @@ function TiltCard({
   };
 
   const onMouseMove = (e) => {
-    if (disabled) return;
+    if (disabled || isMobile) return;
     const el = ref.current;
     if (!el) return;
 

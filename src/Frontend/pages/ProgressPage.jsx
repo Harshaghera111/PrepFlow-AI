@@ -1,6 +1,7 @@
 // ProgressPage — GitHub heatmap + LeetCode stats layout
 import React, { useState, useEffect } from "react";
-import { getAllDays, getBookmarks, removeBookmark } from "../services/db";
+import { motion } from "framer-motion";
+import { getAllDays, getBookmarks, removeBookmark } from "../../Backend/services/db";
 import Spinner from "../components/Spinner";
 
 const DIFF_MAP = {
@@ -62,13 +63,13 @@ function ProgressPage({ user }) {
   const handleRemove = async id => { await removeBookmark(userId, id); setBookmarks(b => b.filter(x => x.id !== id)); };
 
   return (
-    <div style={{ background: "var(--bg)", minHeight: "100vh", padding: "28px 20px 80px" }}>
-      <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+    <div className="pf-dashboard-bg" style={{ minHeight: "100vh" }}>
+      <div className="pf-dashboard-container">
 
-        <div style={{ marginBottom: "24px" }}>
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
           <h1 style={{ fontSize: "22px", fontWeight: 800, color: "var(--text-1)", letterSpacing: "-0.4px", marginBottom: "3px" }}>My Progress</h1>
           <p style={{ fontSize: "12px", color: "var(--text-3)" }}>Your coding journey on PrepFlow AI</p>
-        </div>
+        </motion.div>
 
         {/* Stats */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "10px", marginBottom: "14px" }}>

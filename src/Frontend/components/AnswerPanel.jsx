@@ -1,7 +1,7 @@
 // AnswerPanel — LeetCode-style code editor with run + check
 import React, { useState } from "react";
-import { checkAnswer } from "../services/api";
-import { runCode } from "../services/runner";
+import { checkAnswer } from "../../Backend/services/api";
+import { runCode } from "../../Backend/services/runner";
 
 const LANGS = ["javascript", "python", "java", "cpp", "typescript"];
 const LANG_LABEL = { javascript: "JavaScript", python: "Python", java: "Java", cpp: "C++", typescript: "TypeScript" };
@@ -14,7 +14,7 @@ const STARTERS   = {
   typescript: "// Write your solution here\nfunction solution(): void {\n  \n}",
 };
 
-function AnswerPanel({ question, userId, solved, onSolved }) {
+function AnswerPanel({ question, onSolved }) {
   const [mode, setMode]         = useState("code");
   const [lang, setLang]         = useState("javascript");
   const [code, setCode]         = useState(STARTERS["javascript"]);
@@ -59,7 +59,7 @@ function AnswerPanel({ question, userId, solved, onSolved }) {
   const rc = RES[String(result?.correct ?? "null")];
 
   return (
-    <div className="card card-accent-blue fade-in" style={{ padding: 0 }}>
+    <div className="card card-accent-blue fade-in pf-glass-card" style={{ padding: 0 }}>
 
       {/* ─ Header ─ */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 18px", borderBottom: "1px solid var(--border)" }}>

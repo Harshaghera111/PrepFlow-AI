@@ -15,7 +15,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { db } from "./firebase";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 // ── API endpoints & keys ──────────────────────────────────────────────────────
 
@@ -396,7 +396,7 @@ export async function fetchDashboardData(topic = "Any", company = "Any", force =
         generatedAt: serverTimestamp(),
         source:      n8nResult ? "n8n" : "gemini",
       });
-    } catch (saveErr) {}
+    } catch { /* empty */ }
   }
 
   return { question, hint, articles, difficulty, news: newsRaw, topic: returnedTopic, company: returnedCompany };

@@ -1,7 +1,7 @@
 // Card component — clean, minimal
 import React from "react";
 
-function Card({ title, icon, children, badge, action, accentColor }) {
+function Card({ title, icon, children, badge, action }) {
   return (
     <div className="card fade-in">
       {/* Header */}

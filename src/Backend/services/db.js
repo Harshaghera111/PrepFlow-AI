@@ -77,7 +77,7 @@ export async function getDayProgress(userId) {
  * Mark today's question as solved and update the streak.
  * Increments streak only once per day.
  */
-export async function markSolved(userId, currentStreak) {
+export async function markSolved(userId) {
   try {
     const dayRef = getDayRef(userId);
     const daySnap = await getDoc(dayRef);

@@ -9,41 +9,28 @@ import React from 'react';
 export default function ReminderBadge({ deadline }) {
   if (!deadline) return null;
 
-  const now = Date.now();
-  const msLeft = deadline.getTime() - now;
-  const hoursLeft = msLeft / 36e5;
-  const daysLeft = hoursLeft / 24;
+  const d = deadline?.toDate ? deadline.toDate() : new Date(deadline * 1000 || deadline);
+  const ms = d.getTime() - Date.now();
+  const hrs = ms / 36e5;
+  
+  if (ms < 0) return <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-red-50 text-red-500 border border-red-100 font-medium">Overdue</span>;
 
-  let colorVar = 'var(--green)';
-  let bgVar = 'var(--green-muted)';
-  let borderColor = 'var(--green-border)';
+  let style = "bg-zinc-50 text-zinc-400 border border-zinc-100";
+  let text = `Due ${d.toLocaleDateString()}`;
 
-  if (hoursLeft < 0) {
-    colorVar = 'var(--red)'; bgVar = 'var(--red-muted)'; borderColor = 'rgba(239, 71, 67, 0.25)';
-  } else if (hoursLeft < 24) {
-    colorVar = 'var(--red)'; bgVar = 'var(--red-muted)'; borderColor = 'rgba(239, 71, 67, 0.25)';
-  } else if (hoursLeft < 72) {
-    colorVar = 'var(--yellow)'; bgVar = 'var(--yellow-muted)'; borderColor = 'rgba(255, 192, 30, 0.25)';
+  if (hrs < 1) {
+    style = "bg-red-50 text-red-500 border border-red-100";
+    text = `Due in ${Math.ceil(ms / 60000)} min`;
+  } else if (hrs < 24) {
+    style = "bg-orange-50 text-orange-500 border border-orange-100";
+    text = `Due in ${Math.ceil(hrs)} hrs`;
+  } else if (hrs < 72) {
+    style = "bg-yellow-50 text-yellow-600 border border-yellow-100";
+    text = `Due in ${Math.ceil(hrs / 24)} days`;
   }
 
-  let text = '';
-  if (hoursLeft < 0) text = `Overdue by ${Math.abs(Math.round(hoursLeft))}h`;
-  else if (hoursLeft < 24) text = `in ${Math.round(hoursLeft)} hours`;
-  else text = `in ${Math.round(daysLeft)} days`;
-
   return (
-    <span style={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      padding: '2px 8px',
-      borderRadius: '4px',
-      fontSize: '11px',
-      fontWeight: 600,
-      background: bgVar,
-      color: colorVar,
-      border: `1px solid ${borderColor}`,
-      whiteSpace: 'nowrap'
-    }}>
+    <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${style}`}>
       {text}
     </span>
   );

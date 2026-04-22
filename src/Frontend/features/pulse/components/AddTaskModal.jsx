@@ -49,23 +49,25 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }) {
   };
 
   return (
-    <div style={{
-      position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
-      background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000
-    }}>
-      <div className="card" style={{ width: '90%', maxWidth: '420px', padding: '24px' }}>
-        <h2 style={{ fontSize: '18px', fontWeight: 600, marginBottom: '16px' }}>Add New Task</h2>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center animate-in fade-in duration-200">
+      <div className={`w-full sm:max-w-md bg-white dark:bg-zinc-900 rounded-t-2xl sm:rounded-2xl shadow-xl p-5 sm:p-6 transform transition-all duration-200 ease-out translate-y-0 opacity-100`}>
         
-        {error && <div style={{ color: 'var(--red)', fontSize: '13px', marginBottom: '12px' }}>{error}</div>}
+        <div className="flex items-center justify-between mb-5">
+           <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Add New Task</h2>
+           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-600 transition-colors duration-150">
+             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+           </button>
+        </div>
         
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        {error && <div className="text-[var(--red)] text-xs font-medium bg-red-50 px-3 py-2 rounded-md mb-4">{error}</div>}
+        
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
-            <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-2)', marginBottom: '4px' }}>Title</label>
+            <label className="text-xs font-medium text-zinc-500 mb-1 block">Title</label>
             <input 
               autoFocus
               type="text" 
-              className="auth-input" 
+              className={`w-full rounded-lg border ${error ? 'border-[var(--red)] focus:ring-[var(--red)]/30' : 'border-zinc-200 dark:border-zinc-700'} bg-white dark:bg-zinc-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--orange)]/40 focus:border-[var(--orange)] transition-colors duration-150`}
               value={title} 
               onChange={e => setTitle(e.target.value)} 
               placeholder="e.g. Finish React assignment" 
@@ -73,19 +75,19 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }) {
           </div>
           
           <div>
-            <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-2)', marginBottom: '4px' }}>Deadline</label>
+            <label className="text-xs font-medium text-zinc-500 mb-1 block">Deadline</label>
             <input 
               type="datetime-local" 
-              className="auth-input" 
+              className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--orange)]/40 focus:border-[var(--orange)] transition-colors duration-150"
               value={deadline} 
               onChange={e => setDeadline(e.target.value)} 
             />
           </div>
 
           <div>
-             <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-2)', marginBottom: '4px' }}>Type (Auto-detected)</label>
+             <label className="text-xs font-medium text-zinc-500 mb-1 block">Type</label>
              <select 
-               className="auth-input" 
+               className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--orange)]/40 focus:border-[var(--orange)] transition-colors duration-150"
                value={type} 
                onChange={e => setType(e.target.value)}
              >
@@ -95,23 +97,29 @@ export default function AddTaskModal({ isOpen, onClose, onAdd }) {
                <option value="event">Event</option>
                <option value="holiday">Holiday</option>
              </select>
+             {title.length > 2 && (
+                <div className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-orange-50 text-orange-500 border border-orange-100 mt-2">
+                  Auto-detected: {type} · tap to change
+                </div>
+             )}
           </div>
 
           <div>
-             <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-2)', marginBottom: '4px' }}>Description (optional)</label>
+             <label className="text-xs font-medium text-zinc-500 mb-1 block">Description (optional)</label>
              <textarea 
-               className="auth-input" 
+               className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--orange)]/40 focus:border-[var(--orange)] transition-colors duration-150"
                value={description} 
                onChange={e => setDescription(e.target.value)} 
                placeholder="Details..."
-               style={{ minHeight: '60px', resize: 'vertical' }}
+               style={{ minHeight: '80px', resize: 'vertical' }}
                maxLength={500}
              />
           </div>
 
-          <div style={{ display: 'flex', gap: '12px', marginTop: '8px', justifyContent: 'flex-end' }}>
-            <button type="button" className="btn btn-outline" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn btn-orange">Add Task</button>
+          <div className="pt-2">
+             <button type="submit" className="w-full py-2.5 rounded-lg bg-[var(--orange)] text-white font-medium text-sm hover:brightness-110 active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed">
+               Add Task
+             </button>
           </div>
         </form>
       </div>

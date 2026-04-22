@@ -49,6 +49,25 @@ export default function PulsePage({ user }) {
   // Fallback debug to confirm render on deployed site
   console.log("PulsePage rendered successfully. DEMO_MODE:", DEMO_MODE, "Tasks loaded:", tasks.length);
 
+  const getDashboardStatus = (tasksArray) => {
+    const isToday = (deadline) => {
+      const d = deadline?.toDate ? deadline.toDate() : new Date(deadline * 1000 || deadline);
+      const now = new Date();
+      return d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    };
+    const missedNum = tasksArray.filter(t => t.status === 'missed').length;
+    const dueToday = tasksArray.filter(t => isToday(t.deadline) && t.status === 'pending').length;
+    const allDone = tasksArray.length > 0 && tasksArray.every(t => t.status === 'completed');
+
+    if (tasksArray.length === 0) return "Ready to plan your day?";
+    if (allDone) return "✅ All clear. Great work today.";
+    if (missedNum > 0) return `⚠️ ${missedNum} task${missedNum>1?'s':''} need attention.`;
+    if (dueToday > 0) return `🔥 ${dueToday} task${dueToday>1?'s':''} due today.`;
+    return "📅 You're on track. Keep going.";
+  };
+
+  const subStatus = getDashboardStatus(tasks);
+
   const handleToggleStatus = async (task) => {
     const newStatus = task.status === 'completed' ? 'pending' : 'completed';
     if (DEMO_MODE) {
@@ -77,7 +96,6 @@ export default function PulsePage({ user }) {
     await addTask({ ...taskData, userId: user.uid });
   };
 
-  // Sections
   const now = new Date();
   const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
   const next7DaysEnd = new Date(todayEnd.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -96,101 +114,94 @@ export default function PulsePage({ user }) {
     else if (d <= next7DaysEnd) upcomingTasks.push(t);
   });
 
-  // Sort Missed by missedCount desc
   missedTasks.sort((a,b) => (b.missedCount || 0) - (a.missedCount || 0));
 
   return (
-    <div className="pf-dashboard-bg" style={{ minHeight: '100vh' }}>
-      <div className="pf-dashboard-container fade-in">
-        
-        {toastMessage && (
-           <div style={{
-             position: 'fixed', top: '70px', right: '20px', zIndex: 9999,
-             background: 'var(--bg-elevated)', border: '1px solid var(--orange)',
-             padding: '12px 16px', borderRadius: '8px', boxShadow: 'var(--shadow-md)',
-             color: 'var(--text-1)'
-           }}>
-             <strong style={{ display: 'block', color: 'var(--orange)' }}>{toastMessage.title}</strong>
-             <span style={{ fontSize: '13px' }}>{toastMessage.body}</span>
-           </div>
-        )}
-
-        {DEMO_MODE && (
-           <div style={{
-             background: 'var(--orange-muted)', border: '1px solid var(--orange)',
-             padding: '8px 16px', borderRadius: '8px', marginBottom: '16px',
-             color: 'var(--orange)', fontSize: '14px', fontWeight: '600',
-             textAlign: 'center'
-           }}>
-             🚀 Demo Mode: This is a preview of PrepFlow Pulse with sample data
-           </div>
-        )}
-
-        <div className="pf-dashboard-header pf-glass-card">
-          <div>
-             <h1 style={{ fontSize: '24px', fontWeight: 800, margin: 0, letterSpacing: '-0.5px' }}>
-                PrepFlow <span style={{ color: 'var(--orange)' }}>Pulse</span>
-             </h1>
-             <p style={{ color: 'var(--text-2)', fontSize: '14px', marginTop: '4px' }}>
-                Smart Reminder & Tracking System
-             </p>
-          </div>
-          <button className="btn btn-orange" onClick={() => setIsModalOpen(true)}>
-             + Add Task
-          </button>
-        </div>
-
-        {error && (
-           <div style={{ padding: '12px', background: 'var(--red-muted)', color: 'var(--red)', borderRadius: '8px', marginBottom: '16px', fontSize: '13px' }}>
-             Warning: Real-time sync degraded (index building). Falling back to local sort.
-           </div>
-        )}
-
-        <div className="pf-dashboard-grid" style={{ gridTemplateColumns: '1fr' }}>
-           
-           {/* Today */}
-           <div style={{ marginBottom: '24px' }}>
-             <h2 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '12px', color: 'var(--text-1)' }}>Today's Tasks</h2>
-             {loading ? <TaskCard loading /> : todaysTasks.length > 0 ? todaysTasks.map(t => (
-               <TaskCard 
-                 key={t.id} 
-                 task={t} 
-                 onStatusToggle={() => handleToggleStatus(t)} 
-                 onDelete={() => handleDelete(t.id)} 
-               />
-             )) : <EmptyState title="Clear for today" subtitle="Enjoy your day or jump ahead." emoji="🎉" />}
-           </div>
-
-           {/* Upcoming */}
-           <div style={{ marginBottom: '24px' }}>
-             <h2 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '12px', color: 'var(--text-1)' }}>Upcoming (Next 7 days)</h2>
-             {loading ? <TaskCard loading /> : upcomingTasks.length > 0 ? upcomingTasks.map(t => (
-               <TaskCard 
-                 key={t.id} 
-                 task={t} 
-                 onStatusToggle={() => handleToggleStatus(t)} 
-                 onDelete={() => handleDelete(t.id)} 
-               />
-             )) : <EmptyState title="Nothing approaching" subtitle="Add new assignments or study goals." emoji="📅" />}
-           </div>
-
-           {/* Missed */}
-           {missedTasks.length > 0 && (
-             <div style={{ marginBottom: '24px' }}>
-               <h2 style={{ fontSize: '16px', fontWeight: 700, marginBottom: '12px', color: 'var(--red)' }}>Missed Tasks</h2>
-               {missedTasks.map(t => (
-                 <TaskCard 
-                   key={t.id} 
-                   task={t} 
-                   onStatusToggle={() => handleToggleStatus(t)} 
-                   onDelete={() => handleDelete(t.id)} 
-                 />
-               ))}
+    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 px-4 sm:px-6 lg:px-8 py-6">
+       <div className="max-w-5xl mx-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+             <div>
+                <h1 className="text-xl font-semibold text-zinc-800 dark:text-zinc-100">PrepFlow Pulse</h1>
+                <p className="text-sm text-zinc-500 mt-0.5">{subStatus}</p>
              </div>
-           )}
+             <button onClick={() => setIsModalOpen(true)} className="hidden md:flex items-center gap-1.5 py-2 px-4 rounded-lg bg-[var(--orange)] text-white font-medium text-sm hover:brightness-110 active:scale-[0.98] transition-all duration-150 shadow-md hover:shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Add Task
+             </button>
+          </div>
+          <div className="border-b border-zinc-100 dark:border-zinc-800 mb-6"></div>
 
-        </div>
-      </div>
+          {DEMO_MODE && (
+             <div className="w-full rounded-xl bg-[var(--orange)]/10 border border-[var(--orange)]/20 px-4 py-3 mb-6 flex items-center justify-center gap-2 text-sm text-orange-700 dark:text-orange-300 font-medium">
+               <span className="text-lg">💡</span> Demo Mode: This is a preview of PrepFlow Pulse with sample data
+             </div>
+          )}
+
+          {error && (
+            <div className="w-full rounded-xl bg-red-50 border border-red-100 px-4 py-3 mb-6 flex items-center justify-center gap-2 text-sm text-red-600 font-medium tracking-wide">
+              Real-time sync degraded. Using local state.
+            </div>
+          )}
+
+          {/* Today */}
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-base leading-none">📅</span>
+              <h2 className="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">Today</h2>
+              <span className="ml-auto text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded-full">{todaysTasks.length}</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {loading ? (
+                <><TaskCard loading /><TaskCard loading /><TaskCard loading /></>
+              ) : todaysTasks.length > 0 ? todaysTasks.map(t => (
+                 <TaskCard key={t.id} task={t} onStatusToggle={() => handleToggleStatus(t)} onDelete={() => handleDelete(t.id)} />
+              )) : (
+                 <div className="col-span-full"><EmptyState title="Clear for today" subtitle="Nothing here. Stay ahead — add one." emoji="🎉" /></div>
+              )}
+            </div>
+          </div>
+          
+          <hr className="border-zinc-100 dark:border-zinc-800 my-6" />
+
+          {/* Upcoming */}
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-base leading-none">🗓</span>
+              <h2 className="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">Upcoming</h2>
+              <span className="ml-auto text-xs font-medium bg-zinc-100 dark:bg-zinc-800 text-zinc-500 px-2 py-0.5 rounded-full">{upcomingTasks.length}</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {loading ? (
+                <><TaskCard loading /><TaskCard loading /><TaskCard loading /></>
+              ) : upcomingTasks.length > 0 ? upcomingTasks.map(t => (
+                 <TaskCard key={t.id} task={t} onStatusToggle={() => handleToggleStatus(t)} onDelete={() => handleDelete(t.id)} />
+              )) : (
+                 <div className="col-span-full"><EmptyState title="Nothing approaching" subtitle="Nothing here. Stay ahead — add one." emoji="📅" /></div>
+              )}
+            </div>
+          </div>
+
+          <hr className="border-zinc-100 dark:border-zinc-800 my-6" />
+
+          {/* Missed */}
+          {missedTasks.length > 0 || !loading && (
+            <div className="mb-8">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-base leading-none">⚠️</span>
+                <h2 className="text-sm font-semibold text-red-500 dark:text-red-400 uppercase tracking-wide">Missed tasks</h2>
+                <span className="ml-auto text-xs font-medium bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-900 px-2 py-0.5 rounded-full">{missedTasks.length}</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {missedTasks.length > 0 ? missedTasks.map(t => (
+                   <TaskCard key={t.id} task={t} onStatusToggle={() => handleToggleStatus(t)} onDelete={() => handleDelete(t.id)} />
+                )) : (
+                   <div className="col-span-full"><EmptyState title="All caught up" subtitle="No missed tasks. Keep it up." emoji="👏" isMissed /></div>
+                )}
+              </div>
+            </div>
+          )}
+       </div>
 
       <AddTaskModal 
         isOpen={isModalOpen} 
@@ -198,19 +209,17 @@ export default function PulsePage({ user }) {
         onAdd={handleAddTask} 
       />
 
-      {/* Floating Action Button for mobile */}
-      <button 
-        className="btn btn-orange"
-        onClick={() => setIsModalOpen(true)}
-        style={{
-          position: 'fixed', bottom: '24px', right: '24px', zIndex: 200,
-          width: '56px', height: '56px', borderRadius: '28px',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '24px', boxShadow: 'var(--shadow-md)'
-        }}
-      >
-        +
-      </button>
+      <div className="group fixed bottom-6 right-6 z-40">
+        <div className="group-hover:opacity-100 opacity-0 absolute right-16 bottom-2 bg-zinc-800 text-white text-xs rounded-md px-2 py-1 whitespace-nowrap pointer-events-none transition-opacity duration-150 hidden md:block">
+          Add Task
+        </div>
+        <button 
+          className="w-14 h-14 rounded-full bg-[var(--orange)] text-white text-2xl font-light flex items-center justify-center shadow-lg hover:shadow-xl hover:scale-110 active:scale-95 transition-all duration-200"
+          onClick={() => setIsModalOpen(true)}
+        >
+          +
+        </button>
+      </div>
     </div>
   );
 }

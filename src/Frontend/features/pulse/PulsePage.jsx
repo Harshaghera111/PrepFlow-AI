@@ -6,23 +6,71 @@ import TaskCard from './components/TaskCard';
 import EmptyState from './components/EmptyState';
 import AddTaskModal from './components/AddTaskModal';
 
+const DEMO_MODE = true;
+
+const demoTasks = [
+  {
+    id: "1",
+    title: "Practice DSA - Arrays",
+    type: "study",
+    deadline: new Date(Date.now() + 2 * 60 * 60 * 1000),
+    priority: "high",
+    status: "pending",
+  },
+  {
+    id: "2",
+    title: "Submit DBMS Assignment",
+    type: "assignment",
+    deadline: new Date(Date.now() - 2 * 60 * 60 * 1000),
+    priority: "high",
+    status: "missed",
+    missedCount: 1,
+  },
+  {
+    id: "3",
+    title: "Apply for Hackathon",
+    type: "hackathon",
+    deadline: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    priority: "medium",
+    status: "pending",
+  }
+];
+
 export default function PulsePage({ user }) {
-  const { tasks, loading, error } = useTasks(user?.uid);
+  const { tasks: dbTasks, loading: dbLoading, error: dbError } = useTasks(user?.uid);
   const { toastMessage } = useFCM(user?.uid);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [localTasks, setLocalTasks] = useState(demoTasks);
+
+  const tasks = DEMO_MODE ? localTasks : dbTasks;
+  const loading = DEMO_MODE ? false : dbLoading;
+  const error = DEMO_MODE ? null : dbError;
 
   const handleToggleStatus = async (task) => {
     const newStatus = task.status === 'completed' ? 'pending' : 'completed';
+    if (DEMO_MODE) {
+      setLocalTasks(prev => prev.map(t => t.id === task.id ? { ...t, status: newStatus } : t));
+      return;
+    }
     await updateTask(task.id, { status: newStatus });
   };
 
   const handleDelete = async (taskId) => {
     if (window.confirm("Are you sure you want to delete this task?")) {
+      if (DEMO_MODE) {
+        setLocalTasks(prev => prev.filter(t => t.id !== taskId));
+        return;
+      }
       await deleteTask(taskId);
     }
   };
 
   const handleAddTask = async (taskData) => {
+    if (DEMO_MODE) {
+      const newTask = { ...taskData, id: Date.now().toString(), userId: user?.uid || 'demo-user' };
+      setLocalTasks(prev => [...prev, newTask]);
+      return;
+    }
     await addTask({ ...taskData, userId: user.uid });
   };
 
@@ -61,6 +109,17 @@ export default function PulsePage({ user }) {
            }}>
              <strong style={{ display: 'block', color: 'var(--orange)' }}>{toastMessage.title}</strong>
              <span style={{ fontSize: '13px' }}>{toastMessage.body}</span>
+           </div>
+        )}
+
+        {DEMO_MODE && (
+           <div style={{
+             background: 'var(--orange-muted)', border: '1px solid var(--orange)',
+             padding: '8px 16px', borderRadius: '8px', marginBottom: '16px',
+             color: 'var(--orange)', fontSize: '14px', fontWeight: '600',
+             textAlign: 'center'
+           }}>
+             🚀 Demo Mode: This is a preview of PrepFlow Pulse with sample data
            </div>
         )}
 

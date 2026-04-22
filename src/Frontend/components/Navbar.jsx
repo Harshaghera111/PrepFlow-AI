@@ -45,7 +45,6 @@ function Navbar({ user, streak = 0, demoMode = false, theme = "dark", onExitDemo
           </span>
           </Link>
 
-          {!demoMode && (
             <>
               {/* Desktop nav links */}
               <div className="pf-nav-links-desktop" style={{ display: "flex", gap: "4px" }}>
@@ -76,7 +75,6 @@ function Navbar({ user, streak = 0, demoMode = false, theme = "dark", onExitDemo
                 {menuOpen ? "✕" : "☰"}
               </button>
             </>
-          )}
         </div>
 
         {/* Right — Streak, theme toggle, user avatar, sign out */}
@@ -160,7 +158,7 @@ function Navbar({ user, streak = 0, demoMode = false, theme = "dark", onExitDemo
 
       {/* Mobile dropdown menu */}
       <AnimatePresence>
-        {menuOpen && !demoMode && (
+        {menuOpen && (
           <motion.div
             className="pf-nav-dropdown"
             initial={{ opacity: 0, y: -6 }}

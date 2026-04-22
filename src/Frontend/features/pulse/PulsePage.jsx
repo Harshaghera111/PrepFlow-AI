@@ -46,6 +46,9 @@ export default function PulsePage({ user }) {
   const loading = DEMO_MODE ? false : dbLoading;
   const error = DEMO_MODE ? null : dbError;
 
+  // Fallback debug to confirm render on deployed site
+  console.log("PulsePage rendered successfully. DEMO_MODE:", DEMO_MODE, "Tasks loaded:", tasks.length);
+
   const handleToggleStatus = async (task) => {
     const newStatus = task.status === 'completed' ? 'pending' : 'completed';
     if (DEMO_MODE) {

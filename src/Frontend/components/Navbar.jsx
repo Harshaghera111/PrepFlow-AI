@@ -51,6 +51,7 @@ function Navbar({ user, streak = 0, demoMode = false, theme = "dark", onExitDemo
               <div className="pf-nav-links-desktop" style={{ display: "flex", gap: "4px" }}>
                 <NavLink to="/" label="Dashboard" />
                 <NavLink to="/progress" label="My Progress" />
+                <NavLink to="/pulse" label="Pulse" />
               </div>
 
               {/* Mobile hamburger */}
@@ -170,6 +171,7 @@ function Navbar({ user, streak = 0, demoMode = false, theme = "dark", onExitDemo
             <div className="pf-nav-dropdown-inner">
               <NavLink to="/" label="Dashboard" onNavigate={() => setMenuOpen(false)} />
               <NavLink to="/progress" label="My Progress" onNavigate={() => setMenuOpen(false)} />
+              <NavLink to="/pulse" label="Pulse" onNavigate={() => setMenuOpen(false)} />
             </div>
           </motion.div>
         )}

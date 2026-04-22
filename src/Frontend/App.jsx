@@ -11,6 +11,8 @@ import Navbar from "./components/Navbar";
 import Spinner from "./components/Spinner";
 import { AnimatePresence, motion } from "framer-motion";
 
+const PulsePage = React.lazy(() => import('./features/pulse/PulsePage'));
+
 function App() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -121,6 +123,11 @@ function AppRoutes({
               <>
                 <Route path="/" element={<DashboardPremium user={user} onStreakChange={onStreakChange} />} />
                 <Route path="/progress" element={<ProgressPage user={user} />} />
+                <Route path="/pulse" element={
+                  <React.Suspense fallback={<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}><Spinner message="Loading Pulse..." /></div>}>
+                    <PulsePage user={user} />
+                  </React.Suspense>
+                } />
                 <Route path="/login" element={<Navigate to="/" replace />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </>

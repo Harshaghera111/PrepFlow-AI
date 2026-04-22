@@ -11,11 +11,7 @@ import { getEffectivePriority } from '../utils/priorityEngine';
  * @param {Function} props.onDelete
  */
 export const TaskCardSkeleton = () => (
-  <div className="group relative bg-white dark:bg-zinc-900 rounded-xl p-4 md:p-5 shadow-sm border border-zinc-100 dark:border-zinc-800 animate-pulse">
-    <div className="h-4 w-3/4 bg-zinc-200 dark:bg-zinc-800 rounded mb-3"></div>
-    <div className="h-3 w-1/4 bg-zinc-100 dark:bg-zinc-800 rounded mb-3"></div>
-    <div className="h-3 w-1/2 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
-  </div>
+  <div className="card skeleton" style={{ minHeight: '80px' }} />
 );
 
 export default function TaskCard({ task, loading, onStatusToggle, onDelete }) {
@@ -49,55 +45,52 @@ export default function TaskCard({ task, loading, onStatusToggle, onDelete }) {
   const isDueSoon = (d.getTime() - Date.now()) < 24 * 3600 * 1000 && (d.getTime() - Date.now()) > 0;
 
   return (
-    <div className={`group relative bg-white dark:bg-zinc-900 rounded-xl p-4 md:p-5 shadow-sm hover:shadow-md hover:scale-[1.02] transition-all duration-200 ease-in-out border border-zinc-100 dark:border-zinc-800 ${isCompleted ? 'opacity-60' : ''} ${isMissed ? 'bg-red-50 dark:bg-red-950/20 border-red-100' : ''} ${!isCompleted && !isMissed ? 'border-l-4 border-l-[var(--orange)]' : ''}`}>
-      
-      <div className="flex items-start justify-between gap-2">
-         <div className="flex items-start gap-3">
-           <button 
-             onClick={onStatusToggle}
-             className={`w-5 h-5 rounded-full mt-0.5 flex-shrink-0 flex items-center justify-center border-2 transition-colors ${isCompleted ? 'border-[var(--green)] bg-[var(--green)]' : 'border-zinc-300 dark:border-zinc-600 bg-transparent hover:border-[var(--orange)]'}`}
-           >
-             {isCompleted && <span className="text-white text-[10px] font-bold">✓</span>}
-           </button>
-           <div>
-             <h4 className={`text-sm font-semibold text-zinc-800 dark:text-zinc-100 leading-snug ${isCompleted ? 'line-through' : ''}`}>
-               {task.title}
-             </h4>
-             <div className={`inline-flex items-center gap-1 mt-2 text-xs font-medium px-2.5 py-0.5 rounded-full ${tStyle}`}>
-                {task.type}
-             </div>
-             
-             <div className="flex items-center gap-1.5 mt-3">
-               {!isCompleted && (
-                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400">
-                   <circle cx="12" cy="12" r="10"></circle>
-                   <polyline points="12 6 12 12 16 14"></polyline>
-                 </svg>
-               )}
-               <span className={`text-xs ${isDueSoon && !isCompleted ? 'text-[var(--red)] font-medium' : 'text-zinc-400 dark:text-zinc-500'}`}>
-                 {task.deadline && !isCompleted && <ReminderBadge deadline={d} />}
-               </span>
-               {isMissed && (
-                  <span className="text-xs text-[var(--red)] font-medium ml-2">Missed ({task.missedCount})</span>
-               )}
-             </div>
+    <div className={`card ${isMissed ? 'card-accent-red' : ''}`} style={{ opacity: isCompleted ? 0.6 : 1 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', flex: 1 }}>
+          {/* Completion toggle */}
+          <button
+            onClick={onStatusToggle}
+            style={{
+              width: '18px', height: '18px', borderRadius: '50%', marginTop: '2px',
+              border: `2px solid ${isCompleted ? 'var(--green)' : 'var(--border-strong)'}`,
+              background: isCompleted ? 'var(--green)' : 'transparent',
+              cursor: 'pointer', flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center'
+            }}
+          >
+            {isCompleted && <span style={{ color: '#fff', fontSize: '10px' }}>✓</span>}
+          </button>
 
-             {task.description && (
-               <p className="text-xs text-zinc-500 mt-2 line-clamp-2">
-                 {task.description}
-               </p>
-             )}
-           </div>
-         </div>
-         <div className={`w-2.5 h-2.5 rounded-full mt-1 flex-shrink-0 ${pStyle}`} title={`Priority: ${priority}`}></div>
+          <div style={{ flex: 1 }}>
+            <h4 style={{
+              fontSize: '14px', fontWeight: 600, color: 'var(--text-1)', margin: 0,
+              textDecoration: isCompleted ? 'line-through' : 'none'
+            }}>
+              {task.title}
+            </h4>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px', flexWrap: 'wrap' }}>
+              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${tStyle}`}>{task.type}</span>
+              {task.deadline && !isCompleted && <ReminderBadge deadline={d} />}
+              {isMissed && (
+                <span style={{ fontSize: '11px', color: 'var(--red)', fontWeight: 600 }}>Missed ({task.missedCount})</span>
+              )}
+            </div>
+
+            {task.description && (
+              <p style={{ fontSize: '13px', color: 'var(--text-2)', marginTop: '6px', marginBottom: 0 }}>
+                {task.description}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+          <div className={`w-2 h-2 rounded-full ${pStyle}`} title={`Priority: ${priority}`}></div>
+          <button className="btn-icon" onClick={onDelete} title="Delete">✕</button>
+        </div>
       </div>
-
-      <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-150 absolute top-3 right-3 flex gap-1">
-        <button className="p-1 rounded-md hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-zinc-600 transition-colors" onClick={onDelete} title="Delete Task">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
-        </button>
-      </div>
-
     </div>
   );
 }
